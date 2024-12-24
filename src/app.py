@@ -1,10 +1,13 @@
-from flask import Flask, request
-import requests
+from models import *
+import outlines
+import llama_cpp
 import time
-import torch
-from transformers import AutoTokenizer, LlamaForCausalLM
-import torch
+import os
+import subprocess
+from flask import Flask, request
+from dotenv import load_dotenv
 
+load_dotenv()
 app = Flask(__name__)
 
 PATH_TO_CONVERTED_WT = "/home/ubuntu/Llama-2-13b-chat-german/"
@@ -12,20 +15,28 @@ IS_CHAT_MODEL = True
 
 
 print("Loading model...")
-# TODO: what does wrapping in with `init_empty_weights():` do?
-print(f"CUDA is available: {torch.cuda.is_available()}")
-
-# TODO: test 'auto' instead of device to distribute over gpus
-MODEL = LlamaForCausalLM.from_pretrained(
-    PATH_TO_CONVERTED_WT, device_map="auto", torch_dtype=torch.bfloat16
+subprocess.run(["huggingface-cli", "login", "--token", os.environ["HUGGINGFACE_TOKEN"]])
+model = outlines.models.llamacpp(
+    "bartowski/Llama-3.2-3B-Instruct-GGUF",
+    "Llama-3.2-3B-Instruct-Q4_K_S.gguf",
+    tokenizer=llama_cpp.llama_tokenizer.LlamaHFTokenizer.from_pretrained(
+        "meta-llama/Llama-3.2-3B-Instruct"
+    ),
 )
 
-TOKENIZER = AutoTokenizer.from_pretrained(PATH_TO_CONVERTED_WT)
+# Construct structured sequence generator
+generator = outlines.generate.json(model, LLMResponse)
+tokenizer = model.tokenizer
+
+# Draw a sample
+SEED = 789005
+
+PROMPT = "Instruct: You are a Recruiter for an airport. You have seen thousands of job ads and candidates, and you know exactly what the airports needs from potential candidates. You answer queries from potential candidates. You must also tag queries with a topic. Content queries are related to the duties of a particular job. Practical queries are related to how you can apply. Personal queries are related to a candidates qualification and situation. \nPlease return a JSON object with the answer to the query and topic of the query.\nOutput:"
 
 
 @app.route("/")
 def hello_world():
-    return "Hello World!"
+    return "Not Implemented"
 
 
 @app.route("/health", methods=["GET"])
@@ -33,43 +44,30 @@ def root():
     return "Healthy"
 
 
-@app.route("/generate", methods=["POST"])
+@app.route("/answer_question", methods=["POST"])
 def answer_question():
     """Rewrite a text to simpler language using Llama.
 
     :param text: text to rewrite as str
     "return: dict with rewritten
     """
-    input = request.get_json()
-    prompt = input["prompt"]
-    max_len = input.get("max_len", 50)
+    input = request.get_json()  # noqa: F821
+    prompt = f"{PROMPT}{input['query']}"
 
-    start = time.time()
-    # Encode prompt
-    tokenized_inputs = TOKENIZER(prompt, return_tensors="pt")
-    # Generate output
-    generate_ids = MODEL.generate(
-        tokenized_inputs.input_ids.to("cuda"),
-        max_length=len(tokenized_inputs.input_ids[0]) + max_len,
-    )
-    # Decode output
-    answer = TOKENIZER.batch_decode(
-        generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False
-    )[0]
-
-    # Cut prompt
-    generated_sequence = answer[len(prompt) - 1 :]
-    elapsed = time.time() - start
-
-    print(f"generated sequences {generated_sequence} in {elapsed} seconds")
+    init_time = time.time()
+    sequence = generator(prompt, seed=SEED, max_tokens=512)
+    gen_time = time.time() - init_time
+    tokens = len(tokenizer.encode(str(sequence))[0])
+    tps = tokens / gen_time
+    elapsed = time.time() - init_time
 
     response = {
-        "output": generated_sequence,
         "time": elapsed,
-        "tokens": len(generate_ids),
+        "tokens": tokens,
+        "tps": tps,
     }
 
-    return response
+    return response | sequence.model_dump()
 
 
 if __name__ == "__main__":
