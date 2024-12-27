@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  frontend:
+    network_mode: host
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8501:8501" # Expose port 8501 for the frontend
+    depends_on:
+      - api
+
+  api:
+    network_mode: host
+    build:
+      context: ./llm_api
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000" # Expose port 5000 for the API
