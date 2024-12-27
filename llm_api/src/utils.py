@@ -3,6 +3,20 @@ from transformers import AutoTokenizer
 import outlines
 import llama_cpp
 import time
+import yaml
+
+
+def import_prompt(fp: str) -> Tuple[str, str]:
+    """
+    Read instruction prompt and possible default texts from a prompt.yaml file
+
+    :param fp: Filepath to prompt file
+    :return: Formatted chat template as a string
+    """
+    with open("prompt.yaml") as stream:
+        contents = yaml.safe_load(stream)
+
+    return contents["prompt"], contents["how_to_default"]
 
 
 def prepare_chat_template(

@@ -4,7 +4,8 @@ COPY .env .
 COPY requirements.txt .
 COPY src/ /src
 
-RUN apt update && apt install -y gcc clang clang-tools cmake python3 git curl
+# Install C compiler and tools since the LLM is using a C++ backend
+RUN apt update && apt install -y gcc clang clang-tools cmake python3 git curl 
 
 RUN pip install -r requirements.txt
 

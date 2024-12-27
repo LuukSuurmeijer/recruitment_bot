@@ -7,7 +7,7 @@ from flask import Flask, request
 from transformers import AutoTokenizer
 from dotenv import load_dotenv
 
-from utils import load_llamacpp_model, prepare_chat_template
+from utils import load_llamacpp_model, prepare_chat_template, import_prompt
 import logging
 
 load_dotenv()
@@ -36,10 +36,7 @@ DEFAULT_GENERATOR = outlines.generate.json(MODEL, LLMResponse)
 tokenizer = MODEL.tokenizer
 TOKENIZER = AutoTokenizer.from_pretrained(os.getenv("HF_TOKENIZER"))
 
-PROMPT = """Instruct: You are a Recruiter for an airport. You have seen thousands of job ads and candidates, and you know exactly what the airports needs from potential candidates. You answer queries from potential candidates. You must also tag queries with a topic. Content queries are related to the duties of a particular job. Practical queries are related to how you can apply. Personal queries are related to a candidates qualification and situation.
-            Please return a JSON object with the answer to the query and topic of the query. Be as helpful as possible.
-            This is the conversation so far:\n
-        """
+PROMPT, how_to_apply_text = import_prompt("prompt.yaml")
 
 
 @app.route("/")
@@ -76,7 +73,10 @@ def answer_question():
                 - type: int
                 - name: top_p
                 - type: float
-
+      - name: output_len
+        in: query
+        type: int
+        description: Desired number of output tokens
     responses:
       200:
         description: Output LLM Response
@@ -96,12 +96,19 @@ def answer_question():
           tps:
             type: float
             description: Tokens per second
+          default_response:
+            type: bool
+            description: Whether the answer was LLM-generated or a default text
 
     """
+
+    # Parse request  body
     input = request.get_json()
     chat_history = input.get("chat")
     sampling_args = input.get("sampling_args")
+    output_len = input.get("max_len", 2096)
 
+    # Create the sampler if the request body contains alternative sampling parameters
     if sampling_args:
         logger.info("Got non-default sampling args, building generator.")
         generator = outlines.generate.json(
@@ -112,26 +119,39 @@ def answer_question():
     else:
         generator = DEFAULT_GENERATOR
 
+    # Prepare chat template for LLM
     logger.info("Preparing Chat Template")
     prompt = prepare_chat_template(TOKENIZER, chat_history, PROMPT)
     prompt_tokens = len(TOKENIZER.encode(prompt))
 
+    # Generate the response
     init_time = time.time()
-    sequence = generator(prompt, max_tokens=prompt_tokens + 2096)
+    sequence = generator(prompt, max_tokens=prompt_tokens + output_len)
     gen_time = time.time() - init_time
     tokens = len(tokenizer.encode(str(sequence))[0])
     tps = tokens / gen_time
     elapsed = time.time() - init_time
 
     logger.info(f"Generated {tokens} tokens in {elapsed} seconds")
+    logger.info(f"{sequence}")
 
+    # Prepare response body
+    llm_response = sequence.model_dump()
     response_template = {
         "time": elapsed,
         "tokens": tokens,
         "tps": tps,
     }
 
-    response = response_template | sequence.model_dump()
+    # If the LLM tagged the query as "how_to_apply", return default text as answer
+    if llm_response["topic"] == "how_to_apply":
+        print(how_to_apply_text)
+        llm_response["answer"] = how_to_apply_text
+        response_template["default_response"] = True
+    else:
+        response_template["default_response"] = False
+
+    response = response_template | llm_response  # cool syntax for merging dicts
 
     logger.info(response)
 
@@ -139,5 +159,5 @@ def answer_question():
 
 
 if __name__ == "__main__":
-    port = int(os.getenv("FLASK_PORT", 5000))  # Default to 5000
+    port = int(os.getenv("FLASK_PORT", 5000))
     app.run(host="0.0.0.0", port=port)
