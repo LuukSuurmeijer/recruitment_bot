@@ -1,6 +1,5 @@
-from models import *
+from models import LLMResponse
 import outlines
-import llama_cpp
 import time
 import os
 import subprocess
@@ -8,16 +7,18 @@ from flask import Flask, request
 from transformers import AutoTokenizer
 from dotenv import load_dotenv
 
-from utils import *
+from utils import load_llamacpp_model, prepare_chat_template
 import logging
 
 load_dotenv()
 app = Flask(__name__)
 
-LOG_LEVEL = os.getenv(LOG_LEVEL, "INFO")
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
 logger = logging.getLogger()
-logging.basicConfig(level=LOG_LEVEL)
+logging.basicConfig(
+    format=" %(name)s :: %(levelname)-2s :: %(message)s", level=LOG_LEVEL
+)
 
 IS_CHAT_MODEL = True
 HF_REPO = os.getenv("HF_REPO")
@@ -66,7 +67,7 @@ def answer_question():
         description: The chat history of the session in standard OpenAI/HF format
       - name: sampling_args
         in: query
-        type: Dict
+        type: Array
         description: Sampling parameters
             - parameters:
                 - name: temperature
@@ -104,7 +105,9 @@ def answer_question():
     if sampling_args:
         logger.info("Got non-default sampling args, building generator.")
         generator = outlines.generate.json(
-            MODEL, LLMResponse, sampler=outlines.samplers.multinomial(**sampling_args)
+            MODEL,
+            LLMResponse,
+            sampler=outlines.samplers.multinomial(**sampling_args[0]),
         )
     else:
         generator = DEFAULT_GENERATOR

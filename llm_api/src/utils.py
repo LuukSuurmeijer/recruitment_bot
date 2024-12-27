@@ -1,12 +1,21 @@
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
+from transformers import AutoTokenizer
 import outlines
 import llama_cpp
 import time
 
 
 def prepare_chat_template(
-    tokenizer, chat: Dict[str, str], system_prompt: str
-) -> Dict[str, str]:
+    tokenizer: AutoTokenizer , chat: List[Dict[str, str]], system_prompt: str
+) -> str:
+    """
+    Prepare a chat history for input to an LLM. I.E. Prepend system prompt and tokenize.
+
+    :param tokenize: Tokenizer object of the model
+    :param chat: Chat history with standard role, content format
+    :param system_prompt: Instructions for the LLM
+    :return: Formatted chat template as a string
+    """
     system_turn = {"role": "system", "content": system_prompt}
     if chat is None:
         chat = system_turn
@@ -20,7 +29,7 @@ def load_llamacpp_model(
     repo: str, modelfile: str, tokenizer: str
 ) -> Tuple[outlines.models.LlamaCpp, float]:
     """
-    Load a llamacpp model from Huggingface into CPU. Assumes model is made using llama.cpp.
+    Load a llama.cpp model from Huggingface into CPU. Assumes model is made using llama.cpp.
 
     :param repo: Repo string to Huggingface
     :param modelfile: Which file from the repo to download (or retrieve from cache)
