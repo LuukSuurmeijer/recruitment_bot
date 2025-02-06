@@ -1,6 +1,6 @@
 # Chatbot for Recruitment Queries
 
-I created this Chatbot as part of the application process for the GenAI team at Schiphol.
+I created this Chatbot as part of the application process for the GenAI team at [COMPANY NAME].
 
 ## Usage
 
@@ -46,14 +46,14 @@ This makes this feature highly interesting for such a use-case!
 
 ### Static answers
 
-I imagined recruiters receive a bunch of questions that can be found on the website, so I wanted to include the possibility of more traditional chatbot style answers like the FAQ. This requires classification of user intents. Although in a production setting I would prefer using an intent and classification model like RASA, this is also possible with structured generation. This was easier to implement under the time constraints. With structured generation I instructed the model to classify the intent of the user according to a number of options defined in `models.py`, so that for specific intens a default text can be returned. The intent I added is the "how can I apply intent" and the default text is added to `prompt.yaml`. I took the text from the Schiphol vacancy website FAQ. This way the model can be used in a more reliable way if there should be a standard answer.
+I imagined recruiters receive a bunch of questions that can be found on the website, so I wanted to include the possibility of more traditional chatbot style answers like the FAQ. This requires classification of user intents. Although in a production setting I would prefer using an intent and classification model like RASA, this is also possible with structured generation. This was easier to implement under the time constraints. With structured generation I instructed the model to classify the intent of the user according to a number of options defined in `models.py`, so that for specific intens a default text can be returned. The intent I added is the "how can I apply intent" and the default text is added to `prompt.yaml`. I took the text from the [COMPANY NAME] vacancy website FAQ. This way the model can be used in a more reliable way if there should be a standard answer.
 
 ## RAG
 
 For the chatbot to be useful, a RAG component is basically necessary. I would implement this as follows:
 
 - Add a vector store as a component to the stack. I've used [Milvus](https://milvus.io/) before, so I would probably use it here too. It has functionality for chunking, fast vector comparison and reranking.
-- The documents to be added would be mainly the current listed vacancies at Schiphol.
+- The documents to be added would be mainly the current listed vacancies at [[COMPANY NAME]].
 - As for the embeddings, I would probably want to use some encoder-only transformer such as Roberta. Recently ModernBERT was released, which has a much longer context window making it more suitable for retrieval. I would not resort to simpler models, as they are often worse than a BM25 baseline. I would evaluate comparing to BM25.
 - I would opt for paragraph-based chunking as a baseline. Milvus associates each chunk with the source document so the entire document is never lost. A possible improvement could be to chunk based on a more semantic structure of the vacancies. A job ad usually has a fixed structure of "Who are we", "what will you do", "what are your qualifications" so I would be curious to experiment with chunking based on that strucutre.
 
@@ -62,9 +62,9 @@ The RAG pipeline would then look like
 
 ## Evaluation
 
-I think ultimately the success of the chatbot has to measured with respect to some KPI's relevant to the staff it is supposed to help. The primary goal is to reduce the number of calls / queries Schiphol's recruiters get, so we would have to start measuring non-chatbot call / query volume. To further evaluate whether the bot is helpful, I would include UI elements that allow the user to give feedback to the bot responses. These feedback signlas combined with the fact this bot already classifies queries makes it so you can do useful analyses about which types of queries are helpful and which are not. Sessions would also have to be saved to some sort of database so that they can be analyzed (provided they pass the privacy checks, see below).
+I think ultimately the success of the chatbot has to measured with respect to some KPI's relevant to the staff it is supposed to help. The primary goal is to reduce the number of calls / queries [COMPANY NAME]'s recruiters get, so we would have to start measuring non-chatbot call / query volume. To further evaluate whether the bot is helpful, I would include UI elements that allow the user to give feedback to the bot responses. These feedback signlas combined with the fact this bot already classifies queries makes it so you can do useful analyses about which types of queries are helpful and which are not. Sessions would also have to be saved to some sort of database so that they can be analyzed (provided they pass the privacy checks, see below).
 
-I would also evaluate the retrieval component seperately, as the quality of the retriever affects the LLM output greatly. I would do this by creating some sort of static, simple, custom eval dataset with Schiphol's vacancies and documents. The dataset would consist of some common queries and a known set of documents that should be retrieved for that query. I think even a dataset of ~30 question - document pairs could be enough to get some reliable estimate of how well the retriever is performing. Metrics I would compute are F-score, Precision at k (for however many documents the system is set to retrieve) and mean average precision.
+I would also evaluate the retrieval component seperately, as the quality of the retriever affects the LLM output greatly. I would do this by creating some sort of static, simple, custom eval dataset with [COMPANY NAME]'s vacancies and documents. The dataset would consist of some common queries and a known set of documents that should be retrieved for that query. I think even a dataset of ~30 question - document pairs could be enough to get some reliable estimate of how well the retriever is performing. Metrics I would compute are F-score, Precision at k (for however many documents the system is set to retrieve) and mean average precision.
 
 I would test the generator component seperately by A / B testing prompts and seeing the effect on the user feedback.
 
@@ -73,7 +73,7 @@ I would test the generator component seperately by A / B testing prompts and see
 Privacy is tricky. I think this problem has two sides:
 
 1. Private information submitted by the user
-2. Private information about Schiphol and its employees outputted by the chatbot.
+2. Private information about [COMPANY NAME] and its employees outputted by the chatbot.
 
 The first problem is one of the reasons I would consider using an intent/entity classification model like RASA. RASA has both deep learning as well as symbolic (regex etc.) functionality for detecting certain types of information such as addresses, contact information and banking information. If information like this is detected, the user should be prompted to not include it in the query and the LLM should not answer (this is why it is important to have functionality for static answers). The query and response should not be saved for evaluation.
 

@@ -13,7 +13,7 @@ logging.basicConfig(
     format=" %(name)s :: %(levelname)-2s :: %(message)s", level=LOG_LEVEL
 )
 
-st.title("Schiphol Recruitment Bot")
+st.title("[COMPANY NAME] Recruitment Bot")
 
 # Initialize chat history & response history for logging / saving
 if "messages" not in st.session_state:

@@ -57,7 +57,7 @@ def answer_question():
     This is the endpoint to the loaded LLM, it returns a new response based on the chat history and the system prompt
     ---
     tags:
-      - Schiphol Recruitment Bot Main Endpoint
+      - [COMPANY NAME] Recruitment Bot Main Endpoint
     parameters:
       - name: chat
         in: query
