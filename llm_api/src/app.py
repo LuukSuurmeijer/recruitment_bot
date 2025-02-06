@@ -32,11 +32,13 @@ MODEL, t = load_llamacpp_model(HF_REPO, HF_MODEL, TOKENIZER_STRING)
 logger.info(f"Loaded model in {t} seconds")
 
 # Construct structured sequence generator
+SEED = 789001
 DEFAULT_GENERATOR = outlines.generate.json(MODEL, LLMResponse)
 tokenizer = MODEL.tokenizer
 TOKENIZER = AutoTokenizer.from_pretrained(os.getenv("HF_TOKENIZER"))
 
 PROMPT, how_to_apply_text = import_prompt("prompt.yaml")
+logger.info(PROMPT)
 
 
 @app.route("/")
@@ -52,7 +54,7 @@ def root():
 @app.route("/answer_question", methods=["POST"])
 def answer_question():
     """
-    This is the endpoint that the loaded LLM, it returns a new response based on the chat history and the system prompt
+    This is the endpoint to the loaded LLM, it returns a new response based on the chat history and the system prompt
     ---
     tags:
       - Schiphol Recruitment Bot Main Endpoint
@@ -125,8 +127,9 @@ def answer_question():
     prompt_tokens = len(TOKENIZER.encode(prompt))
 
     # Generate the response
+    logger.info("Generating Response")
     init_time = time.time()
-    sequence = generator(prompt, max_tokens=prompt_tokens + output_len)
+    sequence = generator(prompt, max_tokens=prompt_tokens + output_len, seed=SEED)
     gen_time = time.time() - init_time
     tokens = len(tokenizer.encode(str(sequence))[0])
     tps = tokens / gen_time
@@ -134,7 +137,6 @@ def answer_question():
 
     logger.info(f"Generated {tokens} tokens in {elapsed} seconds")
     logger.info(f"{sequence}")
-
     # Prepare response body
     llm_response = sequence.model_dump()
     response_template = {
@@ -143,8 +145,8 @@ def answer_question():
         "tps": tps,
     }
 
-    # If the LLM tagged the query as "how_to_apply", return default text as answer
-    if llm_response["topic"] == "how_to_apply":
+    # If the LLM tagged the query as "application", return default text as answer
+    if llm_response["topic"] == "application":
         print(how_to_apply_text)
         llm_response["answer"] = how_to_apply_text
         response_template["default_response"] = True

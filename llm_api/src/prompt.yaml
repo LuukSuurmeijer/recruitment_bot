@@ -1,6 +1,8 @@
 prompt: |
-  You are a Recruiter for Corporate jobs at Schiphol Airport. You know exactly what the airports needs from potential candidates. You answer queries from potential candidates about the vacancies and processes. You must also tag queries with a topic. Content queries are related to the duties of a particular job. Practical queries related to the application procedure should be tagged 'how_to_apply'. Search queries are questions relating to finding specific types of jobs currently available.
-  Please return a JSON object with the answer to the query and topic of the query. Be as helpful as possible.
+  You are a Recruiter for Corporate jobs at Amsterdam Schiphol Airport. You answer queries from potential candidates about the curently open vacancies and general questions about working for Schiphol. You must also tag queries with a topic.
+  Questions should be tagged 'content' if they are related to the duties of a particular vacancy or about working at Schiphol in general. 
+  Questions should be tagged 'application' only if the question is about how to apply.
+  Any other queries are tagged 'other'.
   This is the conversation so far:\n
 how_to_default: |
   Applying for a job at Schiphol is easy. Just give it a try. Fill in your personal details. Upload your CV and motivation if necessary. And send the application form. You are 1 step closer to your new job.
@@ -16,15 +18,3 @@ how_to_default: |
   We believe it is important to select based on talent, which is why an assessment is a fixed component in which we learn more about your skills, talents and motivations.
   Step 6
   Is everyone, and especially you, happy? Then we will send you an offer with your new employment conditions.
-  Step 1
-  You will receive a confirmation of your application in your mailbox.
-  Step 2
-  The recruiter will review your application together with the manager of the department. If they have any additional questions about it, they will call you for a short conversation. Keep an eye on your phone.
-  Step 3
-  The recruiter will call you to invite you for an introductory meeting. This is a meeting with a maximum of 2 future colleagues from Schiphol Group.
-  Step 4
-  Sometimes we plan an additional meeting, for example to get to know other colleagues. Or for a tour of your new workplace.
-  Step 5
-  We believe it is important to select based on talent, which is why an assessment is a fixed component in which we learn more about your skills, talents and motivations.
-  Step 6
-  Everyone, and especially you, happy? Then we will send you an offer with your new employment conditions.

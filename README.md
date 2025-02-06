@@ -46,7 +46,7 @@ This makes this feature highly interesting for such a use-case!
 
 ### Static answers
 
-I imagined recruiters receive a bunch of questions that can be found on the website, so I wanted to include the possibility of more traditional chatbot style answers like the FAQ. This requires classification of use intents. Although in a production setting I would prefer using an intent and classification model like RASA, this is also possible with structured generation. This was easier to implement under the time constraints. With structured generation I instructed the model to classify the intent of the user according to a number of options defined in `models.py`, so that for specific intens a default text can be returned. The intent I added is the "how can I apply intent" and the default text is added to `prompt.yaml`. I took the text from the Schiphol vacancy website FAQ. This way the model can be used in a more reliable way if there should be a standard answer.
+I imagined recruiters receive a bunch of questions that can be found on the website, so I wanted to include the possibility of more traditional chatbot style answers like the FAQ. This requires classification of user intents. Although in a production setting I would prefer using an intent and classification model like RASA, this is also possible with structured generation. This was easier to implement under the time constraints. With structured generation I instructed the model to classify the intent of the user according to a number of options defined in `models.py`, so that for specific intens a default text can be returned. The intent I added is the "how can I apply intent" and the default text is added to `prompt.yaml`. I took the text from the Schiphol vacancy website FAQ. This way the model can be used in a more reliable way if there should be a standard answer.
 
 ## RAG
 
@@ -105,3 +105,5 @@ Afterwards we could work on private information detecetion, implementing RASA, b
 
 
 ## Time spent
+
+I spent around ~2 hours getting the basic frontend and API running (and researching what model I wanted to use), I then spent around 2 hours getting it to work with docker and cleaning up the code with logging, documentation etc. I then spent about an hour on the remaining non-coding questions in the assignment. So I went a little bit over the 4 hour mark, but not by much (and only to write things up). I did have a great time coding and thinking about this problem!
